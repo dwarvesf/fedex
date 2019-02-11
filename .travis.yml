@@ -1,0 +1,34 @@
+language: elixir
+
+elixir:
+  - 1.6.0
+
+otp_release:
+  - 20.0
+
+env:
+ global:
+   - MIX_ENV=test
+
+script:
+  - MIX_ENV=test mix test
+  # You need to compile following the line at first in the development environment (MIX_ENV=dev)
+  - mix compile --warnings-as-errors
+  - mix format --check-formatted
+  - mix credo --strict
+
+deploy:
+  # https://docs.travis-ci.com/user/deployment/script/
+  # > `script` must be a scalar pointing to an executable file or command.
+  provider: script
+  # http://yaml.org/spec/1.2/spec.html#id2779048
+  # `>-` indicates the line folding.
+  script: >-
+    mix deps.get &&
+    mix hex.config username "$HEX_USERNAME" &&
+    (mix hex.config encrypted_key "$HEX_ENCRYPTED_KEY" > /dev/null 2>&1) &&
+    (echo "$HEX_PASSPHRASE"\\nY | mix hex.publish) &&
+    mix clean &&
+    mix deps.clean --all
+  on:
+    tags: true
